@@ -5,7 +5,7 @@ import sys
 import random
 try:
     import discord
-    from openai import OpenAI
+    from openai import AsyncOpenAI
     from dotenv import dotenv_values
 except ImportError:
     print("Please install the required packages by running 'pip install -r requirements.txt' or using apt")
@@ -24,17 +24,17 @@ def load_secrets():
         print('Please create a .env file with your OpenAI API key, organization and Discord bot token')
         sys.exit(1)
     config = dotenv_values(path + ".env")
-    openai_client = OpenAI(api_key = config['OPENAI_API_KEY'], organization = config['OPENAI_ORGANIZATION'])
+    openai_client = AsyncOpenAI(api_key = config['OPENAI_API_KEY'], organization = config['OPENAI_ORGANIZATION'])
     if openai_client is None:
         print('Could not load valid OpenAI API key and organization from .env file')
         sys.exit(1)
 
-def howto(question, mode='ubuntu'):
+async def howto(question, mode='ubuntu'):
     m = 'gpt-4o'
     system = 'You are a CLI assistant. Provide only the command, no explanations or extra text.'
     prompt = f'Provide the {mode} command-line command to ' + question
     try:
-        response = openai_client.chat.completions.create(model = m, messages = [{'role': 'system', 'content': system}, {'role': 'user', 'content': prompt}])
+        response = await openai_client.chat.completions.create(model = m, messages = [{'role': 'system', 'content': system}, {'role': 'user', 'content': prompt}])
     except Exception as e:
         return f'Error: {str(e)}'
     md = response.model_dump()
@@ -83,14 +83,15 @@ async def on_message(message):
         if message.content.lower().startswith('!howto'):
             question = message.content[6:]
             print('!howto' + question)
-            await message.channel.send(howto(question))
+            await message.channel.send(await howto(question))
 
         elif message.content.lower().startswith('!powershell'):
             question = message.content[11:]
             print('!powershell' + question)
-            await message.channel.send(howto(question, mode='powershell'))
+            await message.channel.send(await howto(question, mode='powershell'))
 
         elif message.content.lower().startswith('!morn'):
+            # morn returns immediately, no need to await
             await message.channel.send(morn())
 
 client.run(config['DISCORD_BOT_TOKEN'])
