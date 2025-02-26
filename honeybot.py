@@ -3,6 +3,7 @@
 import os
 import sys
 import random
+import subprocess
 try:
     import discord
     from openai import AsyncOpenAI
@@ -66,6 +67,13 @@ places = [
 def morn():
     return f'Morn, {random.choice(things)} finns {random.choice(places)}'
 
+async def vecka_nu():
+    cmd = [ "curl", "-s", "https://vecka.nu/", "-H", "user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36" ]
+    # Pipe output from curl to html2markdown
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    output, error = subprocess.Popen(["html2markdown"], stdin=process.stdout, stdout=subprocess.PIPE).communicate()
+    return output.decode("utf-8").strip()
+
 @client.event
 async def on_ready():
     print(f'Logged in as {client.user}')
@@ -94,4 +102,8 @@ async def on_message(message):
             # morn returns immediately, no need to await
             await message.channel.send(morn())
 
+        elif message.content.lower().startswith('!vecka'):
+            await message.channel.send(await vecka_nu())
+
 client.run(config['DISCORD_BOT_TOKEN'])
+
