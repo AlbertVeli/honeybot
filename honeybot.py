@@ -81,6 +81,12 @@ class HoneyBot:
         output, _ = subprocess.Popen(["html2markdown"], stdin=process.stdout, stdout=subprocess.PIPE).communicate()
         return output.decode("utf-8").strip()
 
+    async def temperatur(self):
+        cmd = ["curl", "-s", "https://api.temperatur.nu/tnu_1.18.php?cli=tnu&p=vasteras", "-H", "user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"]
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        output, _ = subprocess.Popen(["jq", "-r", ".stations[0].temp"], stdin=process.stdout, stdout=subprocess.PIPE).communicate()
+        return output.decode("utf-8").strip()
+
     async def insult(self, username):
         username = username.strip()
         if len(username) < 1:
@@ -132,6 +138,8 @@ class HoneyBot:
                 await message.channel.send(self.morn())
             elif lower.startswith('!vecka'):
                 await message.channel.send(await self.vecka_nu())
+            elif lower.startswith('!temp'):
+                await message.channel.send(await self.temperatur())
             elif lower.startswith('!insult'):
                 await message.channel.send(await self.insult(message.content[7:]))
             elif lower.startswith('!compliment'):
