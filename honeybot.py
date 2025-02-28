@@ -72,7 +72,7 @@ class HoneyBot:
             '!morn - Get a random "Morn" message',
             '!vecka - Get the current week number',
             '!insult - Insult the named user',
-            '!commands - List available commands'
+            '!compliment - Compliment the named user'
         ]
 
     async def vecka_nu(self):
@@ -90,6 +90,22 @@ class HoneyBot:
         prompt = f'Generate a funny and witty insult that is lighthearted and playful.'
         if username:
             prompt = f'Generate a funny and witty insult directed at {username} that is lighthearted and playful.'
+        try:
+            response = await self.openai_client.chat.completions.create(model=m, messages=[{'role': 'system', 'content': system}, {'role': 'user', 'content': prompt}])
+        except Exception as e:
+            return f'Error: {str(e)}'
+        md = response.model_dump()
+        text = md['choices'][0]['message']['content']
+        return text.strip()
+
+    async def compliment(self, username):
+        if len(username) < 1:
+            username = None
+        m = 'gpt-4o'
+        system = 'You are a positive and encouraging assistant. Generate a genuine and uplifting compliment that is warm and friendly.'
+        prompt = 'Generate a sincere and uplifting compliment that makes someone feel valued and appreciated.'
+        if username:
+            prompt = f'Generate a sincere and uplifting compliment directed at {username} that makes them feel valued and appreciated.'
         try:
             response = await self.openai_client.chat.completions.create(model=m, messages=[{'role': 'system', 'content': system}, {'role': 'user', 'content': prompt}])
         except Exception as e:
@@ -117,7 +133,9 @@ class HoneyBot:
             elif lower.startswith('!vecka'):
                 await message.channel.send(await self.vecka_nu())
             elif lower.startswith('!insult'):
-                await message.channel.send(await self.insult(message.content[6:]))
+                await message.channel.send(await self.insult(message.content[7:]))
+            elif lower.startswith('!compliment'):
+                await message.channel.send(await self.compliment(message.content[11:]))
             elif lower.startswith('!commands'):
                 for line in self.commands():
                     await message.channel.send(line)
