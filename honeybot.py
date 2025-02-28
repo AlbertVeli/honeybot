@@ -71,6 +71,7 @@ class HoneyBot:
             '!powershell <question> - Get a PowerShell command-line for a specific task',
             '!morn - Get a random "Morn" message',
             '!vecka - Get the current week number',
+            '!insult - Insult the named user',
             '!commands - List available commands'
         ]
 
@@ -79,6 +80,23 @@ class HoneyBot:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         output, _ = subprocess.Popen(["html2markdown"], stdin=process.stdout, stdout=subprocess.PIPE).communicate()
         return output.decode("utf-8").strip()
+
+    async def insult(self, username):
+        username = username.strip()
+        if len(username) < 1:
+            username = None
+        m = 'gpt-4o'
+        system = 'You are a sarcastic but lighthearted assistant. Generate a humorous insult that is witty but not offensive.'
+        prompt = f'Generate a funny and witty insult that is lighthearted and playful.'
+        if username:
+            prompt = f'Generate a funny and witty insult directed at {username} that is lighthearted and playful.'
+        try:
+            response = await self.openai_client.chat.completions.create(model=m, messages=[{'role': 'system', 'content': system}, {'role': 'user', 'content': prompt}])
+        except Exception as e:
+            return f'Error: {str(e)}'
+        md = response.model_dump()
+        text = md['choices'][0]['message']['content']
+        return text.strip()
 
     async def on_ready(self):
         print(f'Logged in as {self.client.user}')
@@ -98,6 +116,8 @@ class HoneyBot:
                 await message.channel.send(self.morn())
             elif lower.startswith('!vecka'):
                 await message.channel.send(await self.vecka_nu())
+            elif lower.startswith('!insult'):
+                await message.channel.send(await self.insult(message.content[6:]))
             elif lower.startswith('!commands'):
                 for line in self.commands():
                     await message.channel.send(line)
